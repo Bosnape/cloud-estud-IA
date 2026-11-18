@@ -1,0 +1,25 @@
+# syntax=docker/dockerfile:1
+# Variante A. Una sola etapa: gcc y los headers de PostgreSQL se quedan
+# en la imagen que se ejecuta. Sin caché (lo pide el workflow, con --no-cache).
+
+FROM python:3.13.18-slim-bookworm@sha256:a5a7017efc5969e00ae2b91c8eb0631049a569652aa4ffc4501769049ae45c72
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+WORKDIR /app
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends build-essential libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+# --no-binary=psycopg2 obliga a compilar con gcc. Un wheel no mostraría
+# la diferencia entre una etapa y dos.
+RUN pip install --no-cache-dir --no-binary=psycopg2 -r requirements.txt
+
+COPY app/ .
+
+EXPOSE 8000
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

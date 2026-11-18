@@ -1,0 +1,148 @@
+# Compara las variantes A, B y C de la sesión 4.
+# Push: solo la rama del PR y solo si cambia el demo o este archivo.
+# Después del merge queda workflow_dispatch en main.
+
+name: Sesión 4 · comparar imágenes
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - cursor/semana-2-docker-cicd-bf3e
+    paths:
+      - semana-02/sesion-4/demo/**
+      - .github/workflows/sesion-4-comparar-imagenes.yml
+
+permissions:
+  contents: read
+
+jobs:
+  construir:
+    name: Variante ${{ matrix.variante }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - variante: a
+            dockerfile: Dockerfile.a
+            cache: "no"
+            cache_etiqueta: "sin caché (--no-cache)"
+          - variante: b
+            dockerfile: Dockerfile.b
+            cache: "no"
+            cache_etiqueta: "sin caché (--no-cache)"
+          - variante: c
+            dockerfile: Dockerfile.b
+            cache: gha
+            cache_etiqueta: "type=gha, scope=estudia-sesion4-variante-c, mode=max"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+
+      - name: Buildx
+        uses: docker/setup-buildx-action@v4.4.1
+
+      - name: Marcar inicio
+        id: inicio
+        run: echo "ns=$(date +%s%N)" >> "$GITHUB_OUTPUT"
+
+      - name: Construir sin caché
+        if: matrix.cache == 'no'
+        uses: docker/build-push-action@v7.4.0
+        with:
+          context: semana-02/sesion-4/demo
+          file: semana-02/sesion-4/demo/${{ matrix.dockerfile }}
+          tags: estudia-sesion4:${{ matrix.variante }}
+          load: true
+          push: false
+          provenance: false
+          sbom: false
+          no-cache: true
+
+      - name: Construir con caché de GitHub Actions
+        if: matrix.cache == 'gha'
+        uses: docker/build-push-action@v7.4.0
+        with:
+          context: semana-02/sesion-4/demo
+          file: semana-02/sesion-4/demo/${{ matrix.dockerfile }}
+          tags: estudia-sesion4:${{ matrix.variante }}
+          load: true
+          push: false
+          provenance: false
+          sbom: false
+          cache-from: type=gha,scope=estudia-sesion4-variante-c
+          cache-to: type=gha,scope=estudia-sesion4-variante-c,mode=max
+
+      - name: Medir tiempo y tamaño
+        env:
+          INICIO_NS: ${{ steps.inicio.outputs.ns }}
+          VARIANTE: ${{ matrix.variante }}
+          DOCKERFILE: ${{ matrix.dockerfile }}
+          CACHE_ETIQUETA: ${{ matrix.cache_etiqueta }}
+        run: |
+          set -eu
+          python3 - << 'PY'
+          import json
+          import os
+          import subprocess
+
+          fin = int(subprocess.check_output(["date", "+%s%N"], text=True).strip())
+          inicio = int(os.environ["INICIO_NS"])
+          segundos = (fin - inicio) / 1_000_000_000
+          variante = os.environ["VARIANTE"]
+          imagen = f"estudia-sesion4:{variante}"
+          crudo = subprocess.check_output(
+              ["docker", "image", "inspect", "--format", "{{.Size}}", imagen],
+              text=True,
+          ).strip()
+          bytes_imagen = int(crudo)
+          medicion = {
+              "variante": variante,
+              "dockerfile": os.environ["DOCKERFILE"],
+              "cache": os.environ["CACHE_ETIQUETA"],
+              "segundos": round(segundos, 2),
+              "bytes": bytes_imagen,
+              "mib": round(bytes_imagen / 1024 / 1024, 1),
+              "imagen": imagen,
+          }
+          nombre = f"medicion-{variante}.json"
+          with open(nombre, "w", encoding="utf-8") as salida:
+              json.dump(medicion, salida)
+          print(json.dumps(medicion, ensure_ascii=False))
+          PY
+
+      - name: Publicar medición
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: medicion-${{ matrix.variante }}
+          path: medicion-${{ matrix.variante }}.json
+          if-no-files-found: error
+
+  resumen:
+    name: Tabla en el summary
+    needs: construir
+    if: always()
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+
+      - name: Descargar mediciones
+        uses: actions/download-artifact@v8.0.2
+        continue-on-error: true
+        with:
+          pattern: medicion-*
+          merge-multiple: true
+          path: mediciones
+
+      - name: Escribir la tabla
+        run: python3 semana-02/sesion-4/demo/resumir_mediciones.py mediciones

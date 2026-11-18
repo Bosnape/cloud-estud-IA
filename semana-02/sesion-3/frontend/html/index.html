@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Inventario · Estud-IA</title>
+  <style>
+    :root { color-scheme: light; }
+    body {
+      font-family: "Segoe UI", system-ui, sans-serif;
+      margin: 2rem auto;
+      max-width: 40rem;
+      padding: 0 1rem;
+      line-height: 1.45;
+    }
+    h1 { font-size: 1.4rem; margin-bottom: 0.3rem; }
+    form { display: grid; gap: 0.7rem; margin: 1.2rem 0; }
+    label { display: grid; gap: 0.25rem; }
+    input, button { font: inherit; }
+    input { padding: 0.4rem 0.5rem; }
+    button { padding: 0.5rem 0.8rem; width: fit-content; }
+    li { margin: 0.35rem 0; }
+    .aviso { color: #8a1f1f; }
+  </style>
+</head>
+<body>
+  <h1>Inventario</h1>
+  <p>Esta página la sirve nginx. El formulario llama a <code>/api/items</code> y nginx reenvía esa ruta al contenedor <code>backend</code>.</p>
+
+  <form id="formulario">
+    <label>Nombre
+      <input name="nombre" required maxlength="200" autocomplete="off">
+    </label>
+    <label>Nota
+      <input name="nota" maxlength="500" autocomplete="off">
+    </label>
+    <button type="submit">Agregar</button>
+  </form>
+
+  <p id="aviso" class="aviso" hidden></p>
+  <ul id="lista"></ul>
+
+  <script>
+    const lista = document.querySelector("#lista");
+    const aviso = document.querySelector("#aviso");
+    const formulario = document.querySelector("#formulario");
+
+    function mostrarError(texto) {
+      aviso.hidden = false;
+      aviso.textContent = texto;
+    }
+
+    function textoDeItem(item) {
+      return item.nota ? `${item.nombre} — ${item.nota}` : item.nombre;
+    }
+
+    async function cargar() {
+      aviso.hidden = true;
+      const respuesta = await fetch("/api/items");
+      if (!respuesta.ok) {
+        mostrarError("No pude leer los ítems.");
+        return;
+      }
+      const items = await respuesta.json();
+      lista.replaceChildren();
+      if (items.length === 0) {
+        const vacio = document.createElement("li");
+        vacio.textContent = "Todavía no hay ítems.";
+        lista.append(vacio);
+        return;
+      }
+      for (const item of items) {
+        const fila = document.createElement("li");
+        fila.textContent = textoDeItem(item);
+        lista.append(fila);
+      }
+    }
+
+    formulario.addEventListener("submit", async (evento) => {
+      evento.preventDefault();
+      const datos = new FormData(formulario);
+      const nota = String(datos.get("nota") || "").trim();
+      const respuesta = await fetch("/api/items", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          nombre: String(datos.get("nombre") || "").trim(),
+          nota: nota || null,
+        }),
+      });
+      if (!respuesta.ok) {
+        mostrarError("No pude guardar el ítem.");
+        return;
+      }
+      formulario.reset();
+      await cargar();
+    });
+
+    cargar().catch(() => mostrarError("La API no respondió."));
+  </script>
+</body>
+</html>

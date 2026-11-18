@@ -1,0 +1,3 @@
+# La copia local puede tener una clave distinta a la del ejemplo.
+# .env.example sí se versiona.
+.env
