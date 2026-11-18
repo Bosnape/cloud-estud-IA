@@ -29,7 +29,10 @@ RUN apt-get update \
 COPY --from=build /install /usr/local
 
 WORKDIR /app
-COPY app/ .
+COPY app/main.py .
+
+RUN useradd --system --create-home --uid 10001 --shell /usr/sbin/nologin app
+USER app
 
 EXPOSE 8000
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

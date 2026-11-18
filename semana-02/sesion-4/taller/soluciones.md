@@ -106,7 +106,7 @@ jobs:
       - name: Build y push
         uses: docker/build-push-action@v7.4.0
         with:
-          context: semana-02/sesion-4/taller/backend
+          context: semana-02/sesion-3/backend
           push: true
           provenance: false
           tags: ${{ steps.ecr.outputs.registry }}/estudia-backend:taller

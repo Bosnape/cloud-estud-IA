@@ -15,20 +15,20 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout
-        uses: actions/checkout@v7.0.1
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Buildx
-        uses: docker/setup-buildx-action@v4.4.1
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
 
       - name: Marcar inicio
         id: inicio
         run: echo "ns=$(date +%s%N)" >> "$GITHUB_OUTPUT"
 
       - name: Construir la plantilla de una etapa
-        uses: docker/build-push-action@v7.4.0
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
-          context: semana-02/sesion-4/taller/backend
-          file: semana-02/sesion-4/taller/backend/Dockerfile
+          context: semana-02/sesion-3/backend
+          file: semana-02/sesion-3/backend/Dockerfile
           tags: estudia-taller:antes
           load: true
           push: false

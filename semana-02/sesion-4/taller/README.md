@@ -1,6 +1,6 @@
 # Taller · imagen de una etapa, y quién puede publicarla
 
-La plantilla es el backend de la sesión 3, copiado aquí para que puedas modificarlo sin tocar el demo. El Dockerfile tiene una sola etapa. El workflow inicial, que solo corre si lo lanzas a mano, está en [`.github/workflows/sesion-4-taller.yml`](../../../.github/workflows/sesion-4-taller.yml): construye esa imagen y anota segundos y MiB en el summary.
+La plantilla es el backend de la sesión 3, el de una sola etapa: [`semana-02/sesion-3/backend`](../../sesion-3/backend). No hay una segunda copia del código: el taller construye esa misma carpeta. El workflow inicial, que solo corre si lo lanzas a mano, está en [`.github/workflows/sesion-4-taller.yml`](../../../.github/workflows/sesion-4-taller.yml): construye esa imagen y anota segundos y MiB en el summary.
 
 La hoja [`oidc-errores.md`](oidc-errores.md) trae un workflow y dos políticas (confianza del rol y permisos del registro) con tres errores. Las correcciones están en [`soluciones.md`](soluciones.md). Conviene intentar la hoja antes de abrirlas.
 
@@ -36,7 +36,7 @@ El nombre de la imagen tiene que ir en minúsculas (`ghcr.io/<owner>/<repo>/estu
 
 ## Plan B sin Actions: dos builds locales con BuildKit
 
-Desde `semana-02/sesion-4/taller/backend`:
+Desde `semana-02/sesion-3/backend`:
 
 ```bash
 DOCKER_BUILDKIT=1 docker build --progress=plain --no-cache -t estudia-taller:antes .
