@@ -6,7 +6,7 @@ from fastapi import FastAPI
 
 app = FastAPI(title="Estud-IA · sesión 4")
 
-MENSAJE = "API de la sesión 4"
+MENSAJE = "API de la sesión 4, revisión 2"
 
 
 @app.get("/health")
