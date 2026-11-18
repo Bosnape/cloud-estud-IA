@@ -12,6 +12,15 @@ on:
     paths:
       - semana-02/sesion-4/demo/**
       - .github/workflows/sesion-4-comparar-imagenes.yml
+  # Además del push a la rama del PR: el evento pull_request ejecuta la
+  # matriz en el PR hacia main. Los paths evitan correrla si el cambio
+  # no toca el demo. workflow_dispatch sirve al lanzarlo a mano.
+  pull_request:
+    branches:
+      - main
+    paths:
+      - semana-02/sesion-4/demo/**
+      - .github/workflows/sesion-4-comparar-imagenes.yml
 
 permissions:
   contents: read

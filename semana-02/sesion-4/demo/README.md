@@ -10,7 +10,7 @@ A, B y C comparten código, `requirements.txt` y la imagen base `python:3.13.18-
 | B | `Dockerfile.b` | ninguna (`--no-cache`). La etapa final solo tiene el runtime y `libpq5` |
 | C | el mismo `Dockerfile.b` | `type=gha`, `scope=estudia-sesion4-variante-c`, `mode=max` |
 
-`Dockerfile.c` no se construye. Está en el árbol para que se vea que C no tiene otra receta.
+`variante-c.Dockerfile` no se construye. Está en el árbol para que se vea que C no tiene otra receta. No lleva sufijo `.c`: Sonar lo analizaría como código C y el job del repositorio falla.
 
 `mode=max` guarda también las capas intermedias. Sin eso, la etapa que compila no vuelve a usarse y la segunda corrida de C no se nota.
 
