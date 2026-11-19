@@ -1,5 +1,7 @@
 from fastapi import FastAPI
-from codes import encrypt, decrypt
+
+from codes import decrypt, encrypt
+from config import CRIPTO_SECRET_KEY
 
 app = FastAPI()
 
@@ -12,5 +14,6 @@ def read_root():
 @app.get("/secret")
 def read_secret(message: str):
     encrypted = encrypt(message)
-    decrypted = decrypt(encrypted)
+    # La misma clave con la que se cifró. decrypt exige (mensaje, clave).
+    decrypted = decrypt(encrypted, CRIPTO_SECRET_KEY)
     return {"encrypted": encrypted, "decrypted": decrypted}

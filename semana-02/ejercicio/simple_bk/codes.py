@@ -18,10 +18,9 @@ def encrypt(message: str) -> str:
 
 
 def decrypt(encrypted_message: str, key: str) -> str:
-    fernet_key = derive_key(CRIPTO_SECRET_KEY)
+    # Usa la clave que entrega quien llama, no la constante del módulo.
+    fernet_key = derive_key(key)
     cipher = Fernet(fernet_key)
 
     decrypted = cipher.decrypt(encrypted_message.encode())
     return decrypted.decode()
-
- 
