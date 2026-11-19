@@ -1,7 +1,9 @@
+import importlib.util
 import os
 import subprocess
 import sys
 
+import dotenv
 import pytest
 from cryptography.fernet import InvalidToken
 
@@ -46,6 +48,23 @@ def test_docs_redoc_y_openapi(cliente):
     rutas = esquema.json()["paths"]
     assert "/" in rutas
     assert "/secret" in rutas
+
+
+@pytest.mark.parametrize("modo", ["ausente", "vacia"])
+def test_config_falla_en_este_proceso(modo, monkeypatch):
+    # El mismo archivo, otro módulo: coverage ve el raise y no pisa config ya importado.
+    monkeypatch.setattr(dotenv, "load_dotenv", lambda *args, **kwargs: False)
+    if modo == "ausente":
+        monkeypatch.delenv("SECRET_KEY", raising=False)
+    else:
+        monkeypatch.setenv("SECRET_KEY", "")
+    spec = importlib.util.spec_from_file_location(
+        f"config_sin_clave_{modo}",
+        RAIZ / "config.py",
+    )
+    modulo = importlib.util.module_from_spec(spec)
+    with pytest.raises(ValueError, match="SECRET_KEY"):
+        spec.loader.exec_module(modulo)
 
 
 @pytest.mark.parametrize("modo", ["ausente", "vacia"])

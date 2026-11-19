@@ -6,13 +6,13 @@ imagen := "simple-bk:local"
 puerto := env_var_or_default("PORT", "8000")
 clave_ficticia := "clave-ficticia-solo-para-ejemplo"
 
-# Instala dependencias de runtime y el grupo dev (pytest, httpx).
+# Instala dependencias de runtime y el grupo dev (pytest, pytest-cov, httpx).
 install:
-    uv sync --locked --group dev
+    uv sync --locked --no-build --group dev
 
-# Corre la suite de pytest.
+# Corre la suite y escribe coverage.xml en esta carpeta.
 test:
-    uv run --group dev pytest -v
+    uv run --locked --no-build --group dev pytest -v --cov=. --cov-report=xml:coverage.xml --cov-report=term-missing
 
 # Arranca la API en 0.0.0.0. Hace falta SECRET_KEY en el entorno o en .env.
 run:

@@ -8,10 +8,12 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-RUN pip install --no-cache-dir uv==0.13.9
+# --only-binary evita setup.py de paquetes. uv publica wheel.
+RUN pip install --no-cache-dir --only-binary=:all: uv==0.13.9
 
 COPY pyproject.toml uv.lock README.md ./
-RUN uv sync --frozen --no-dev --no-install-project
+# --frozen usa uv.lock. --no-build no ejecuta scripts de sdists.
+RUN uv sync --frozen --no-dev --no-install-project --no-build
 
 COPY main.py codes.py config.py ./
 

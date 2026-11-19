@@ -29,6 +29,8 @@ just test
 just run
 ```
 
+`just test` también escribe `coverage.xml` en esta carpeta. Ese archivo no se versiona.
+
 `just run` publica la API en `0.0.0.0` y en el puerto `PORT` (8000 si no lo defines). Con el servidor en marcha:
 
 ```bash
