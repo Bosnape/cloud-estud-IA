@@ -20,6 +20,23 @@ jobs:
           path: ~/.sonar/cache
           key: ${{ runner.os }}-sonar
           restore-keys: ${{ runner.os }}-sonar
+      - name: Cobertura de la sesión 2
+        run: |
+          python3 -m venv /tmp/cobertura
+          /tmp/cobertura/bin/pip install \
+            -r semana-02/sesion-3/backend/requirements.txt \
+            psycopg2-binary==2.9.13 \
+            pytest \
+            pytest-cov \
+            httpx
+          /tmp/cobertura/bin/pytest \
+            semana-02/sesion-3/backend/tests \
+            semana-02/sesion-4/demo/tests \
+            --cov=semana-02/sesion-3/backend \
+            --cov=semana-02/sesion-4/demo \
+            --cov-report=xml:coverage.xml \
+            --cov-report=term-missing
+
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@4d1dc0c91ee400dcf8a6dddf2f705ac36542e304 # v8.4.0
         env:

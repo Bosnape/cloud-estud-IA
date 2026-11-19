@@ -1,0 +1,67 @@
+# Workflow inicial del taller. No corre en cada push: es la medición "antes"
+# de la plantilla de una sola etapa. Lánzalo a mano.
+
+name: Sesión 4 · taller (imagen inicial)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  medir:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Marcar inicio
+        id: inicio
+        run: echo "ns=$(date +%s%N)" >> "$GITHUB_OUTPUT"
+
+      - name: Construir la plantilla de una etapa
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: semana-02/sesion-3/backend
+          file: semana-02/sesion-3/backend/Dockerfile
+          tags: estudia-taller:antes
+          load: true
+          push: false
+          provenance: false
+          sbom: false
+          no-cache: true
+
+      - name: Anotar en el summary
+        env:
+          INICIO_NS: ${{ steps.inicio.outputs.ns }}
+        run: |
+          set -eu
+          python3 - << 'PY'
+          import os
+          import subprocess
+
+          fin = int(subprocess.check_output(["date", "+%s%N"], text=True).strip())
+          segundos = (fin - int(os.environ["INICIO_NS"])) / 1_000_000_000
+          crudo = subprocess.check_output(
+              ["docker", "image", "inspect", "--format", "{{.Size}} {{.Id}}", "estudia-taller:antes"],
+              text=True,
+          ).strip()
+          bytes_texto, imagen_id = crudo.split()
+          mib = int(bytes_texto) / 1024 / 1024
+          texto = (
+              "## Taller · imagen inicial (una etapa)\n\n"
+              "| | MiB | Segundos | Clave (id de la imagen) |\n"
+              "|---|---:|---:|---|\n"
+              f"| Antes | {mib:.1f} | {segundos:.2f} | `{imagen_id}` |\n\n"
+              "Build con `--no-cache` en `ubuntu-24.04`. "
+              "Esta fila es el antes de la tabla del taller.\n"
+          )
+          print(texto)
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as resumen:
+              resumen.write(texto)
+          PY

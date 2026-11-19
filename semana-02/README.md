@@ -46,6 +46,14 @@ Además retomamos lo de la semana 1: ciclo de vida de imágenes, redes, volúmen
 - Una validación con caso correcto y caso fallido, y el log interpretado.
 - La condición de avance explicitada, y los permisos y el alcance reales del pipeline.
 
+## Material de los encuentros 3 y 4
+
+- [Sesión 3 · Compose local](sesion-3/README.md): frontend, API y PostgreSQL con un comando, dos redes y un volumen.
+- [Sesión 4 · comparar tres imágenes](sesion-4/demo/README.md): la misma API en una etapa, en dos etapas y con caché de Actions.
+- [Sesión 4 · taller](sesion-4/taller/README.md): la imagen de una etapa, la hoja de OIDC y el plan B sin AWS.
+
+La rama `reto` es el punto de partida de la actividad de red. Lo que está en esta carpeta, en `main`, es la solución.
+
 ## Para llevar a la semana 3
 
 Guarda la versión de tu imagen, tus instrucciones y tu workflow con su estado real de promoción. Identifica **qué parte de tu entorno sigue configurándose a mano**: ahí entra la infraestructura como código.

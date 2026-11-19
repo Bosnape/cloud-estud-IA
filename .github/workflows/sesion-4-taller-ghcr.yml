@@ -1,0 +1,54 @@
+# Plan B del taller: publicar en GHCR con el GITHUB_TOKEN del job.
+# No usa AWS. Solo corre si alguien escribe "publicar" en el dispatch,
+# porque un push a GHCR es un efecto real sobre el registro del repositorio.
+
+name: Sesión 4 · taller (GHCR)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmar:
+        description: Escribe publicar para subir la imagen a GHCR
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  publicar:
+    if: inputs.confirmar == 'publicar'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Nombre en minúsculas
+        id: imagen
+        run: |
+          repo="$(echo "${GITHUB_REPOSITORY}" | tr '[:upper:]' '[:lower:]')"
+          echo "ref=ghcr.io/${repo}/estudia-taller" >> "$GITHUB_OUTPUT"
+
+      - name: Login en GHCR
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Build y push
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: semana-02/sesion-3/backend
+          file: semana-02/sesion-3/backend/Dockerfile
+          push: true
+          provenance: false
+          sbom: false
+          tags: ${{ steps.imagen.outputs.ref }}:taller
