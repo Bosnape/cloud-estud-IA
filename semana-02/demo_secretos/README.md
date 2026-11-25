@@ -260,13 +260,36 @@ rm -rf image.tar image-extracted layers
 ## Preguntas
 
 1. ¿Por qué `.env` no existe en el contenedor final, pero podemos recuperarlo desde la imagen?
+
+**Respuesta:** Porque el filesystem del contenedor es la unión de todas las capas y el `rm` solo agrega un *whiteout* (`.wh..env`) que oculta el archivo en esa vista. La capa del `COPY` sigue intacta dentro de la imagen, así que `docker save` + `tar` permiten leerla (en el lab: `layers/blobs_sha256_a560…/app/.env`).
+
 2. ¿Cuál es la diferencia entre una capa Docker y el filesystem final del contenedor?
+
+**Respuesta:** Una capa es un diff inmutable (archivos añadidos/modificados/borrados) generado por una instrucción del Dockerfile y guardado como tar. El filesystem final es la vista combinada de todas las capas (overlayfs) más una capa de escritura del contenedor; lo borrado en capas superiores se oculta, pero no se elimina de las inferiores.
+
 3. ¿Por qué ejecutar `RUN rm .env` no elimina de forma segura la capa anterior?
+
+**Respuesta:** Porque las capas son inmutables y aditivas: `rm` crea una capa nueva con un marcador de borrado y no modifica la capa del `COPY`. El secreto sigue en la imagen (y en su historial), solo que oculto en la vista final; incluso aumenta el tamaño total.
+
 4. ¿Cuál es el propósito de `.dockerignore`?
+
+**Respuesta:** Excluir archivos del contexto de build (`.env`, `.git`, claves, etc.) para que no se envíen al daemon ni puedan copiarse con `COPY . .`. Evita filtrar secretos y reduce tamaño y tiempo de build. Es una barrera preventiva, no sustituye una gestión correcta de secretos.
+
 5. ¿Por qué `ARG` y `ENV` no son mecanismos apropiados para almacenar secretos?
+
+**Respuesta:** `ENV` queda en los metadatos de la imagen y es visible con `docker inspect` y en cualquier contenedor. `ARG` queda registrado en el historial de build (`docker history`) y en los metadatos de la imagen. En ambos casos cualquiera con acceso a la imagen puede leerlos.
+
 6. ¿Cómo proporcionarías de forma segura un secreto que se necesita durante la construcción de una imagen Docker?
+
+**Respuesta:** Con *build secrets* de BuildKit: `RUN --mount=type=secret,id=mi_secreto ...` y `docker build --secret id=mi_secreto,src=archivo` (en Compose, sección `secrets:` bajo `build`). Se monta temporalmente como archivo en memoria solo durante ese `RUN` y no se guarda en ninguna capa. Alternativa: multi-stage build, donde el secreto solo vive en una etapa que se descarta.
+
 7. ¿Cómo deberían entregarse los secretos a una aplicación que se ejecuta en producción?
+
+**Respuesta:** En tiempo de ejecución, nunca dentro de la imagen: mediante un gestor de secretos (Vault, AWS Secrets Manager, Azure Key Vault, GCP Secret Manager), Docker/Kubernetes Secrets montados como archivos, o variables inyectadas por el orquestador. Además: mínimo privilegio, rotación periódica y, cuando sea posible, identidades de workload (IAM roles/OIDC) en lugar de credenciales estáticas.
+
 8. Si una imagen que contiene un secreto real fue publicada en un registry, ¿es suficiente con eliminar la imagen? ¿Qué otras acciones deberían realizarse?
+
+**Respuesta:** No. Pudo haber sido descargada, cacheada o copiada (mirrors, CI, terceros), así que hay que asumir el secreto comprometido. Acciones: 1) revocar y rotar la credencial de inmediato; 2) revisar logs de acceso/uso para detectar abuso; 3) eliminar la imagen y todos sus tags/digests, y limpiar cachés; 4) reconstruir la imagen sin el secreto; 5) auditar otros lugares donde pudo filtrarse; 6) agregar escaneo de secretos (trivy, gitleaks) al pipeline.
 
 ## Reto final
 
