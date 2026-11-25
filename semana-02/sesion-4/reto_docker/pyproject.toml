@@ -8,7 +8,13 @@ dependencies = [
     "fastapi>=0.115.0",
     "uvicorn[standard]>=0.32.0",
     "torch>=2.5.0",
-    "numpy>=2.5.5",
-    "celery>=5.7.0",
-    "cryptography>=50.0.2",
 ]
+
+# Torch solo CPU: evita las ~GB de librerías CUDA (nvidia-*, triton).
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
